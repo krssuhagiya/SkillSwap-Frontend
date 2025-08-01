@@ -1,11 +1,38 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { useAuth } from "../context/AuthContext";
 import { jwtDecode } from "jwt-decode";
-import Logout from "../components/Logout";
+import HeaderNavigation from "../components/Home/HeaderNavigation"; 
+import PublicProfiles from "../components/PublicProfiles";
+import QuickStats from "../components/Home/QuickStats";
+import QuickActions from "../components/Home/QuickActions"; 
+import RecentActivity from "../components/Home/RecentActivity";
+import WelcomeBanner from "../components/Home/WelcomeBanner";
+import NotificationCenter from "../components/Home/NotificationCenter"; 
 
+
+// Main Home Component
 const Home = () => {
   const { user, loading } = useAuth();
   const [decodedUser, setDecodedUser] = useState(null);
+  
+  // Mock data - replace with real API calls
+  const [dashboardData, setDashboardData] = useState({
+    stats: {
+      connections: 248,
+      profileViews: 1205,
+      messages: 12
+    },
+    activities: [
+      { message: "John Smith viewed your profile", time: "2 hours ago" },
+      { message: "New connection request from Sarah Johnson", time: "4 hours ago" },
+      { message: "You have a message from Mike Wilson", time: "1 day ago" }
+    ],
+    notifications: [
+      { message: "Complete your profile to get more visibility", time: "1 hour ago" },
+      { message: "3 new job opportunities match your skills", time: "3 hours ago" },
+      { message: "Weekly network update is available", time: "1 day ago" }
+    ]
+  });
 
   useEffect(() => {
     if (user?.token) {
@@ -19,44 +46,42 @@ const Home = () => {
     }
   }, [user]);
 
+  // Memoize user data to prevent unnecessary re-renders
+  const userData = useMemo(() => {
+    return decodedUser || user || {};
+  }, [decodedUser, user]);
+
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-lg text-gray-600">
-        Loading user data...
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-lg text-gray-600">Loading your dashboard...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-6 md:px-12">
-      <div className="max-w-3xl mx-auto bg-white rounded-xl shadow-lg p-8">
-        <h1 className="text-3xl font-bold text-gray-800 mb-4">
-          Welcome to Home Page
-        </h1>
-
-        {decodedUser ? (
-          <div className="mt-6 space-y-4 text-gray-700">
-            <h3 className="text-xl font-semibold text-blue-600">
-              User Info from Token
-            </h3>
-            <p>
-              <span className="font-medium">User ID:</span> {decodedUser.id}
-            </p>
-            <p>
-              <span className="font-medium">Issued At:</span>{" "}
-              {new Date(decodedUser.iat * 1000).toLocaleString()}
-            </p>
-            <p>
-              <span className="font-medium">Expires At:</span>{" "}
-              {new Date(decodedUser.exp * 1000).toLocaleString()}
-            </p>
+    <div className="min-h-screen bg-gray-50">
+      <HeaderNavigation user={userData} />
+      
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <WelcomeBanner user={userData} />
+        
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Main Content */}
+          <div className="lg:col-span-2">
+            <QuickStats stats={dashboardData.stats} />
+            <QuickActions />
+            <PublicProfiles />
           </div>
-        ) : (
-          <p className="text-gray-500 mt-6">No token data available.</p>
-        )}
-
-        <div className="mt-8">
-          <Logout />
+          
+          {/* Sidebar */}
+          <div className="lg:col-span-1">
+            <NotificationCenter notifications={dashboardData.notifications} />
+            <RecentActivity activities={dashboardData.activities} />
+          </div>
         </div>
       </div>
     </div>
