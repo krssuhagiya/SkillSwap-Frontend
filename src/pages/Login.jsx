@@ -1,8 +1,6 @@
 import React, { useState } from "react";
 import { useAuth } from "../context/AuthContext";
-import { useNavigate } from "react-router";
-import Logout from "../components/Logout";
-import UserProfileService from "../services/userProfile.service";
+import { useNavigate } from "react-router"; 
 
 const Login = () => {
   const navigate = useNavigate();
@@ -24,9 +22,10 @@ const Login = () => {
     setIsLoading(true);
     
     try {
-      const userInfo = await login(form);
+      const userInfo = await login(form); 
+      
       if (userInfo.hasProfile) {
-        navigate("/");
+        navigate("/dashboard");
       } else {
         navigate("/user-profile");
       }

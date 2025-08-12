@@ -99,7 +99,7 @@ const UserProfile = () => {
             setSuccess("Profile completed successfully!");
             setTimeout(() => {
                 // navigate("/"); // Uncomment when using with router
-                navigate("/");
+                navigate("/dashboard");
             }, 1000);
         } catch (err) {
             setError(err.message || "Failed to complete profile.");

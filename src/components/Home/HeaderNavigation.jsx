@@ -4,9 +4,14 @@ import {
     Settings,
 } from "lucide-react";
 import Logout from "../Logout";
+import { useNavigate } from "react-router";
 
 // Header Navigation Component
 const HeaderNavigation = ({ user }) => {
+    const navigate = useNavigate();
+    const updateUserbtn = () => {
+        navigate("/update-profile");
+    }
     return (
         <div className="bg-white shadow-sm border-b border-gray-200 mb-8">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -27,12 +32,12 @@ const HeaderNavigation = ({ user }) => {
                             <Settings className="h-5 w-5" />
                         </button>
 
-                        <div className="flex items-center space-x-3">
+                        <div className="flex items-center space-x-3 cursor-pointer" onClick={updateUserbtn}>
                             <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
                                 <User className="h-4 w-4 text-white" />
                             </div>
                             <span className="text-sm font-medium text-gray-900">
-                                {user?.name || user?.email?.split('@')[0] || 'User'}
+                                {user?.fullname || user?.email?.split('@')[0] || 'User'}
                             </span>
                         </div>
 
