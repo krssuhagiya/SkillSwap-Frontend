@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChevronLeft, ChevronRight, User, Briefcase, GraduationCap, Calendar, Check } from 'lucide-react';
+import { ChevronLeft, ChevronRight, User, Briefcase, GraduationCap, Calendar, Check, Clock } from 'lucide-react';
 import UserProfileService from '../services/userProfile.service';
 import { useNavigate } from 'react-router';
 import { useAuth } from "../context/AuthContext";
@@ -19,18 +19,20 @@ const UserProfile = () => {
         experience: [],
         education: [],
         availability: [],
+        timeCredits: 0, // Added timeCredits field
         isProfilePublic: false,
     });
     const [error, setError] = useState("");
     const [success, setSuccess] = useState("");
 
-    const totalSteps = 4;
+    const totalSteps = 5; // Updated to 5 steps
 
     const steps = [
         { number: 1, title: "Personal Info", icon: User },
         { number: 2, title: "Experience", icon: Briefcase },
         { number: 3, title: "Education", icon: GraduationCap },
         { number: 4, title: "Availability", icon: Calendar },
+        { number: 5, title: "Time Credits", icon: Clock }, // Added Time Credits step
     ];
 
     // Experience handlers
@@ -86,7 +88,8 @@ const UserProfile = () => {
 
     // Main form handlers
     const handleChange = (e) => {
-        setForm({ ...form, [e.target.name]: e.target.value });
+        const value = e.target.type === 'number' ? parseInt(e.target.value) || 0 : e.target.value;
+        setForm({ ...form, [e.target.name]: value });
     };
 
     const handleSubmit = async (e) => {
@@ -94,15 +97,35 @@ const UserProfile = () => {
         setError("");
         setSuccess("");
         try {
-            // Simulate API call
-            await UserProfileService.createProfile({ ...form, userId: user._id || user.id });
-            setSuccess("Profile completed successfully!");
+            // Prepare data according to controller expectations
+            const profileData = {
+                userId: user._id || user.id,
+                fullname: form.fullname,
+                headline: form.headline,
+                aboutMe: form.aboutMe,
+                location: form.location,
+                publicEmail: form.publicEmail,
+                phone: form.phone,
+                linkedinUrl: form.linkedinUrl,
+                experience: form.experience,
+                education: form.education,
+                availability: form.availability,
+                timeCredits: form.timeCredits,
+                isProfilePublic: form.isProfilePublic
+            };
+
+            await UserProfileService.createProfile(profileData);
+            setSuccess("Profile created successfully!");
             setTimeout(() => {
-                // navigate("/"); // Uncomment when using with router
                 navigate("/dashboard");
             }, 1000);
         } catch (err) {
-            setError(err.message || "Failed to complete profile.");
+            // Handle specific error messages from the controller
+            if (err.response?.data?.message === "Profile already exists for this user") {
+                setError("Profile already exists for this user. Please update your existing profile instead.");
+            } else {
+                setError(err.response?.data?.message || err.message || "Failed to create profile.");
+            }
         }
     };
 
@@ -128,6 +151,8 @@ const UserProfile = () => {
                 return true; // Education is optional
             case 4:
                 return true; // Availability is optional
+            case 5:
+                return true; // Time Credits is optional
             default:
                 return true;
         }
@@ -244,6 +269,7 @@ const UserProfile = () => {
                                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                             />
                         </div>
+                        
                         <div className="flex items-center mt-6">
                             <label htmlFor="isProfilePublic" className="mr-4 text-sm font-medium text-gray-700">
                                 Set Public Profile
@@ -267,7 +293,6 @@ const UserProfile = () => {
                         <p className="mt-2 text-sm text-gray-500">
                             When enabled, your profile will be visible to others.
                         </p>
-
                     </div>
                 );
 
@@ -502,6 +527,44 @@ const UserProfile = () => {
                                 </div>
                             </div>
                         )}
+                    </div>
+                );
+
+            case 5:
+                return (
+                    <div className="space-y-6">
+                        <h2 className="text-2xl font-bold text-gray-800">Time Credits</h2>
+                        <p className="text-gray-600">Set your initial time credits for the platform</p>
+
+                        <div className="max-w-md">
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Time Credits
+                            </label>
+                            <input
+                                type="number"
+                                name="timeCredits"
+                                placeholder="Enter time credits (e.g., 100)"
+                                value={form.timeCredits}
+                                onChange={handleChange}
+                                min="0"
+                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            />
+                            <p className="mt-2 text-sm text-gray-500">
+                                Time credits can be used for various platform activities. You can update this later.
+                            </p>
+                        </div>
+
+                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                            <div className="flex items-start">
+                                <Clock className="w-5 h-5 text-blue-600 mt-0.5 mr-3" />
+                                <div>
+                                    <h3 className="text-sm font-medium text-blue-800">About Time Credits</h3>
+                                    <p className="text-sm text-blue-700 mt-1">
+                                        Time credits are a virtual currency used within the platform for various activities and services.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 );
 

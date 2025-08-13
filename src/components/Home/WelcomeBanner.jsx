@@ -10,7 +10,7 @@ const WelcomeBanner = ({ user }) => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold mb-2">
-            {greeting}, {user?.name || user?.email?.split('@')[0] || 'User'}!
+            {greeting}, {user?.fullname || user?.email?.split('@')[0] || 'User'}!
           </h1>
           <p className="text-blue-100">
             Welcome back to your professional network. What would you like to accomplish today?

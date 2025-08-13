@@ -1,5 +1,5 @@
 import React from "react";
-import { Route, Routes } from "react-router";
+import { Navigate, Route, Routes } from "react-router";
 import Register from "./pages/Register";
 import Login from "./pages/Login";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -7,44 +7,42 @@ import UserProfile from "./pages/UserProfile";
 import NeedHelp from "./pages/NeedHelp";
 import Dashboard from "./pages/Dashboard";
 import UpdateUser from "./components/UpdateUserInfo/UpdateUser";
+import { DashboardProvider } from "./context/DashboardContext";
+
+const DashboardRoutes = () => (
+  <DashboardProvider>
+    <Routes>
+      <Route path="/" element={<Navigate to="/dashboard" replace />} />
+      <Route path="/dashboard" element={<Dashboard />} />
+      <Route path="/update-profile" element={<UpdateUser />} />
+    </Routes>
+  </DashboardProvider>
+)
+
 const AppRouter = () => {
   return (
     <Routes>
       <Route path="/register" element={<Register />} />
       <Route path="/login" element={<Login />} />
       <Route path="/help" element={<NeedHelp />} />
-      <Route
-        path="/user-profile"
-        element={
-          <ProtectedRoute>
-            <UserProfile />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/dashboard"
-        element={
-          <ProtectedRoute>
-            <Dashboard />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/update-profile"
-        element={
-          <ProtectedRoute>
-            <UpdateUser />
-          </ProtectedRoute>
-        }
-      />
-      <Route
+      <Route path="/user-profile" element={
+        <ProtectedRoute>
+          <UserProfile />
+        </ProtectedRoute>
+      } />
+      <Route path="/*" element={
+        <ProtectedRoute>
+          <DashboardRoutes />
+        </ProtectedRoute>
+      } /> 
+      {/* <Route
         path="/"
         element={
           <ProtectedRoute>
             <Dashboard />
           </ProtectedRoute>
         }
-      />
+      /> */}
     </Routes>
   );
 };
