@@ -269,7 +269,7 @@ const UserProfile = () => {
                                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                             />
                         </div>
-                        
+
                         <div className="flex items-center mt-6">
                             <label htmlFor="isProfilePublic" className="mr-4 text-sm font-medium text-gray-700">
                                 Set Public Profile

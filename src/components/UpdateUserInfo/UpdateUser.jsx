@@ -1,7 +1,7 @@
 // pages/UpdateProfile.jsx
 import React, { useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, User, Briefcase, GraduationCap, Calendar, Check, Save } from 'lucide-react'; 
-import { useNavigate } from 'react-router-dom'; 
+import { ChevronLeft, ChevronRight, User, Briefcase, GraduationCap, Calendar, Check, Save, Clock } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import DashboardLayout from '../../components/Layout/DashboardLayout';
 import UserProfileService from '../../services/userProfile.service';
 import { useDashboard } from '../../context/DashboardContext';
@@ -22,19 +22,21 @@ const UpdateProfile = () => {
         experience: [],
         education: [],
         availability: [],
+        timeCredits: 0,
         isProfilePublic: false,
     });
     const [error, setError] = useState("");
     const [success, setSuccess] = useState("");
     const [saving, setSaving] = useState(false);
 
-    const totalSteps = 4;
+    const totalSteps = 5;
 
     const steps = [
         { number: 1, title: "Personal Info", icon: User },
         { number: 2, title: "Experience", icon: Briefcase },
         { number: 3, title: "Education", icon: GraduationCap },
         { number: 4, title: "Availability", icon: Calendar },
+        { number: 5, title: "Time Credits", icon: Clock },
     ];
 
     // Load existing profile data
@@ -55,6 +57,7 @@ const UpdateProfile = () => {
                         experience: user.experience || [],
                         education: user.education || [],
                         availability: user.availability || [],
+                        timeCredits: user.timeCredits || 0,
                         isProfilePublic: user.isProfilePublic || false,
                     });
                 } else if (user?.id || user?._id) {
@@ -72,6 +75,7 @@ const UpdateProfile = () => {
                         experience: profile.experience || [],
                         education: profile.education || [],
                         availability: profile.availability || [],
+                        timeCredits: profile.timeCredits || 0,
                         isProfilePublic: profile.isProfilePublic || false,
                     });
                 }
@@ -139,7 +143,8 @@ const UpdateProfile = () => {
 
     // Main form handlers
     const handleChange = (e) => {
-        setForm({ ...form, [e.target.name]: e.target.value });
+        const value = e.target.type === 'number' ? parseInt(e.target.value) || 0 : e.target.value;
+        setForm({ ...form, [e.target.name]: value });
     };
 
     const handleSubmit = async (e) => {
@@ -147,14 +152,14 @@ const UpdateProfile = () => {
         setError("");
         setSuccess("");
         setSaving(true);
-        
-        try { 
+
+        try {
             await UserProfileService.updateProfile(user.userId._id, form);
-            
+
             setSuccess("Profile updated successfully!");
             refreshUserData(); // Refresh the dashboard context data
             setTimeout(() => {
-                navigate("/dashboard");
+                navigate("/profile");
             }, 1500);
         } catch (err) {
             setError(err.message || "Failed to update profile.");
@@ -167,11 +172,12 @@ const UpdateProfile = () => {
     const saveCurrentStep = async () => {
         setSaving(true);
         try {
-            await UserProfileService.updateProfile(user._id || user.id, form);
-            setSuccess("Changes saved!");
-            setTimeout(() => setSuccess(""), 2000);
+            await UserProfileService.updateProfile(user.userId._id, form);
+            setSuccess("Changes saved!"); setTimeout(() => {
+                navigate("/profile");
+            }, 1500);
         } catch (err) {
-            setError("Failed to save changes",err);
+            setError("Failed to save changes");
             setTimeout(() => setError(""), 3000);
         } finally {
             setSaving(false);
@@ -200,6 +206,8 @@ const UpdateProfile = () => {
                 return true; // Education is optional
             case 4:
                 return true; // Availability is optional
+            case 5:
+                return true; // Time Credits is optional
             default:
                 return true;
         }
@@ -583,7 +591,7 @@ const UpdateProfile = () => {
                                 {saving ? 'Saving...' : 'Save Changes'}
                             </button>
                         </div>
-                        
+
                         <p className="text-gray-600">Select the days you're available for work or meetings</p>
 
                         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
@@ -619,6 +627,56 @@ const UpdateProfile = () => {
                                 </div>
                             </div>
                         )}
+                    </div>
+                );
+
+            case 5:
+                return (
+                    <div className="space-y-6">
+                        <div className="flex justify-between items-center">
+                            <h2 className="text-2xl font-bold text-gray-800">Time Credits</h2>
+                            <button
+                                type="button"
+                                onClick={saveCurrentStep}
+                                disabled={saving}
+                                className="flex items-center px-4 py-2 text-sm bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 disabled:opacity-50"
+                            >
+                                <Save className="w-4 h-4 mr-2" />
+                                {saving ? 'Saving...' : 'Save Changes'}
+                            </button>
+                        </div>
+
+                        <p className="text-gray-600">Set your time credits for the platform</p>
+
+                        <div className="max-w-md">
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Time Credits
+                            </label>
+                            <input
+                                type="number"
+                                name="timeCredits"
+                                placeholder="Enter time credits (e.g., 100)"
+                                value={form.timeCredits}
+                                onChange={handleChange}
+                                min="0"
+                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            />
+                            <p className="mt-2 text-sm text-gray-500">
+                                Time credits can be used for various platform activities. You can update this later.
+                            </p>
+                        </div>
+
+                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                            <div className="flex items-start">
+                                <Clock className="w-5 h-5 text-blue-600 mt-0.5 mr-3" />
+                                <div>
+                                    <h3 className="text-sm font-medium text-blue-800">About Time Credits</h3>
+                                    <p className="text-sm text-blue-700 mt-1">
+                                        Time credits are a virtual currency used within the platform for various activities and services.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 );
 
@@ -669,10 +727,9 @@ const UpdateProfile = () => {
 
                             return (
                                 <div key={step.number} className="flex items-center">
-                                    <div className={`flex items-center justify-center w-10 h-10 rounded-full border-2 ${
-                                        isCompleted
-                                            ? 'bg-green-500 border-green-500 text-white'
-                                            : isCurrent
+                                    <div className={`flex items-center justify-center w-10 h-10 rounded-full border-2 ${isCompleted
+                                        ? 'bg-green-500 border-green-500 text-white'
+                                        : isCurrent
                                             ? 'bg-blue-500 border-blue-500 text-white'
                                             : 'bg-white border-gray-300 text-gray-400'
                                         }`}>
@@ -683,15 +740,13 @@ const UpdateProfile = () => {
                                         )}
                                     </div>
                                     <div className="ml-3 hidden sm:block">
-                                        <p className={`text-sm font-medium ${
-                                            isCompleted || isCurrent ? 'text-gray-900' : 'text-gray-500'
+                                        <p className={`text-sm font-medium ${isCompleted || isCurrent ? 'text-gray-900' : 'text-gray-500'
                                             }`}>
                                             {step.title}
                                         </p>
                                     </div>
                                     {index < steps.length - 1 && (
-                                        <div className={`flex-1 h-0.5 mx-4 ${
-                                            isCompleted ? 'bg-green-500' : 'bg-gray-200'
+                                        <div className={`flex-1 h-0.5 mx-4 ${isCompleted ? 'bg-green-500' : 'bg-gray-200'
                                             }`} />
                                     )}
                                 </div>
@@ -711,10 +766,9 @@ const UpdateProfile = () => {
                                 type="button"
                                 onClick={prevStep}
                                 disabled={currentStep === 1}
-                                className={`flex items-center px-6 py-3 rounded-lg font-medium ${
-                                    currentStep === 1
-                                        ? 'text-gray-400 bg-gray-100 cursor-not-allowed'
-                                        : 'text-gray-700 bg-gray-200 hover:bg-gray-300'
+                                className={`flex items-center px-6 py-3 rounded-lg font-medium ${currentStep === 1
+                                    ? 'text-gray-400 bg-gray-100 cursor-not-allowed'
+                                    : 'text-gray-700 bg-gray-200 hover:bg-gray-300'
                                     }`}
                             >
                                 <ChevronLeft className="w-5 h-5 mr-2" />
@@ -726,10 +780,9 @@ const UpdateProfile = () => {
                                     type="button"
                                     onClick={nextStep}
                                     disabled={!isStepValid(currentStep)}
-                                    className={`flex items-center px-6 py-3 rounded-lg font-medium ${
-                                        isStepValid(currentStep)
-                                            ? 'text-white bg-blue-600 hover:bg-blue-700'
-                                            : 'text-gray-400 bg-gray-200 cursor-not-allowed'
+                                    className={`flex items-center px-6 py-3 rounded-lg font-medium ${isStepValid(currentStep)
+                                        ? 'text-white bg-blue-600 hover:bg-blue-700'
+                                        : 'text-gray-400 bg-gray-200 cursor-not-allowed'
                                         }`}
                                 >
                                     Next
@@ -737,8 +790,9 @@ const UpdateProfile = () => {
                                 </button>
                             ) : (
                                 <button
-                                    type="submit"
+                                    type="button"
                                     disabled={saving}
+                                    onClick={handleSubmit}
                                     className="flex items-center px-6 py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition duration-200 disabled:opacity-50"
                                 >
                                     <Check className="w-5 h-5 mr-2" />

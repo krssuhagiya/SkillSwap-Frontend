@@ -23,6 +23,8 @@ const Login = () => {
     
     try {
       const userInfo = await login(form); 
+      console.log(userInfo);
+      
       
       if (userInfo.hasProfile) {
         navigate("/dashboard");

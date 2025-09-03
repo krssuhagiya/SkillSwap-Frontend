@@ -3,7 +3,6 @@ import { useAuth } from './AuthContext'
 import { jwtDecode } from 'jwt-decode';
 import UserProfileService from '../services/userProfile.service';
 
-
 const DashboardContext = createContext();
 
 export const useDashboard = () => {
@@ -14,47 +13,58 @@ export const useDashboard = () => {
   return context;
 };
 
-export const DashboardProvider  = ({ children }) => {
+export const DashboardProvider = ({ children }) => {
     const { user, loading: authLoading } = useAuth();
     const [decodedUser, setDecodedUser] = useState(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
-    useEffect(() => {
-        if (user?.token) {
-            const fetchUserData = async () => {
-                setLoading(true);
-                setError(null);
-                try {
-                    const decoded = jwtDecode(user.token);
-                    
-                    const userData = await UserProfileService.getProfileByUserId(decoded.id); 
-                    setDecodedUser(userData.data);
-                } catch (err) {
-                    setError("Failed to load user data");
-                    console.error("Invalid token or API error", err);
-                } finally {
-                    setLoading(false);
-                }
-            };
-            fetchUserData();
+    // Function to fetch user data
+    const fetchUserData = async (forceRefresh = false) => {
+        if (!user?.token) return;
+        
+        setLoading(true);
+        setError(null);
+        try {
+            const decoded = jwtDecode(user.token);
+            const userData = await UserProfileService.getProfileByUserId(decoded.id); 
+            setDecodedUser(userData.data);
+        } catch (err) {
+            setError("Failed to load user data");
+            console.error("Invalid token or API error", err);
+        } finally {
+            setLoading(false);
         }
+    };
+
+    useEffect(() => {
+        fetchUserData();
     }, [user]);
 
     const userData = useMemo(() => {
         return decodedUser || user || {};
     }, [decodedUser, user]);
 
+    // Method to update user data directly (for immediate updates after profile changes)
+    const updateUser = (updatedUserData) => {
+        setDecodedUser(prevUser => ({
+            ...prevUser,
+            ...updatedUserData
+        }));
+    };
+
+    // Method to refresh user data from server
+    const refreshUser = async () => {
+        await fetchUserData(true);
+    };
+
     const value = {
         user: userData,
         loading: authLoading || loading,
         error,
-        refreshUserData: () => {
-            // Trigger re-fetch if needed
-            if (user?.token) {
-                // Re-fetch logic here
-            }
-        }
+        updateUser,        // Add this method
+        refreshUser,       // Add this method
+        refreshUserData: refreshUser // Keep for backward compatibility
     };
 
     return (
