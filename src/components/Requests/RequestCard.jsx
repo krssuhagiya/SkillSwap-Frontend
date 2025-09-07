@@ -3,8 +3,9 @@ import { CalendarIcon, CheckIcon, Loader2, MailIcon, UserIcon, XIcon } from "luc
 import UserProfileService from "../../services/userProfile.service";
 
 // Request Card Component
-const RequestCard = ({ request, onAccept, onReject, isLoading }) => {
+const RequestCard = ({ request, currentUserId, viewType, onAccept, onReject, onCancel, isLoading }) => {
     const [requesterName, setRequesterName] = useState("Loading...");
+    const [counterpartyName, setCounterpartyName] = useState("");
 
     const formatDate = (dateString) => {
         return new Date(dateString).toLocaleDateString("en-US", {
@@ -30,21 +31,28 @@ const RequestCard = ({ request, onAccept, onReject, isLoading }) => {
     };
 
     useEffect(() => {
-        const fetchProfile = async () => {
+        const fetchProfiles = async () => {
             try {
-                const idDetail = await UserProfileService.getProfileByUserId(request.requester._id);
-                setRequesterName(
-                    idDetail.data.fullname || request.requester?.fullname || request.requester?.name || "Unknown User"
-                );
+                if (request?.requester?._id) {
+                    const reqDetail = await UserProfileService.getProfileByUserId(request.requester._id);
+                    setRequesterName(
+                        reqDetail.data.fullname || request.requester?.fullname || request.requester?.name || "Unknown User"
+                    );
+                }
+                if (request?.recipient?._id) {
+                    const recDetail = await UserProfileService.getProfileByUserId(request.recipient._id);
+                    setCounterpartyName(
+                        recDetail.data.fullname || request.recipient?.fullname || request.recipient?.name || "Unknown User"
+                    );
+                }
             } catch (err) {
                 console.error(err);
                 setRequesterName(request.requester?.fullname || request.requester?.name || "Unknown User");
+                setCounterpartyName(request.recipient?.fullname || request.recipient?.name || "Unknown User");
             }
         };
 
-        if (request?.requester?._id) {
-            fetchProfile();
-        }
+        fetchProfiles();
     }, [request]);
 
     const isPending = request.status === "pending";
@@ -58,8 +66,10 @@ const RequestCard = ({ request, onAccept, onReject, isLoading }) => {
                         <UserIcon className="w-6 h-6 text-blue-600" />
                     </div>
                     <div>
-                        <h3 className="text-lg font-semibold text-gray-900">{requesterName}</h3>
-                        <p className="text-sm text-gray-600">{request.requester?.headline || "No headline"}</p>
+                        <h3 className="text-lg font-semibold text-gray-900">
+                            {viewType === 'received' ? requesterName : counterpartyName}
+                        </h3>
+                        <p className="text-sm text-gray-600">{viewType === 'received' ? (request.requester?.headline || "No headline") : (request.recipient?.headline || "No headline")}</p>
                     </div>
                 </div>
                 <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(request.status)}`}>
@@ -81,28 +91,43 @@ const RequestCard = ({ request, onAccept, onReject, isLoading }) => {
             {/* Date */}
             <div className="flex items-center text-sm text-gray-500 mb-4">
                 <CalendarIcon className="w-4 h-4 mr-1" />
-                <span>Received {formatDate(request.createdAt)}</span>
+                <span>{viewType === 'received' ? 'Received' : 'Sent'} {formatDate(request.createdAt)}</span>
             </div>
 
             {/* Action Buttons */}
             {isPending && (
                 <div className="flex space-x-3">
-                    <button
-                        onClick={() => onAccept(request._id)}
-                        disabled={isLoading}
-                        className="flex-1 flex items-center justify-center gap-2 bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                    >
-                        {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckIcon className="w-4 h-4" />}
-                        Accept
-                    </button>
-                    <button
-                        onClick={() => onReject(request._id)}
-                        disabled={isLoading}
-                        className="flex-1 flex items-center justify-center gap-2 bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                    >
-                        {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <XIcon className="w-4 h-4" />}
-                        Reject
-                    </button>
+                    {viewType === 'received' ? (
+                        <>
+                            <button
+                                onClick={() => onAccept(request._id)}
+                                disabled={isLoading}
+                                className="flex-1 flex items-center justify-center gap-2 bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            >
+                                {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckIcon className="w-4 h-4" />}
+                                Accept
+                            </button>
+                            <button
+                                onClick={() => onReject(request._id)}
+                                disabled={isLoading}
+                                className="flex-1 flex items-center justify-center gap-2 bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            >
+                                {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <XIcon className="w-4 h-4" />}
+                                Reject
+                            </button>
+                        </>
+                    ) : (
+                        <>
+                            <button
+                                onClick={() => onCancel(request._id)}
+                                disabled={isLoading}
+                                className="flex-1 flex items-center justify-center gap-2 bg-gray-600 text-white py-2 px-4 rounded-lg hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            >
+                                {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <XIcon className="w-4 h-4" />}
+                                Cancel
+                            </button>
+                        </>
+                    )}
                 </div>
             )}
         </div>

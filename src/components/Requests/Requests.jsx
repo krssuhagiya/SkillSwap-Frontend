@@ -13,6 +13,7 @@ import { Loader2 } from 'lucide-react';
 import SwapRequestsService from '../../services/swapRequests.service';
 import DashboardLayout from '../Layout/DashboardLayout';
 import RequestCard from './RequestCard';
+import { useAuth } from '../../context/AuthContext';
 
 // Success/Error Notifications (same as in PublicProfiles)
 const ErrorNotification = ({ message, onClose, isVisible }) => {
@@ -74,10 +75,12 @@ const EmptyState = ({ activeTab }) => (
 
 // Main Requests Component
 const Requests = () => {
+    const { user } = useAuth();
     const [requests, setRequests] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [actionLoading, setActionLoading] = useState(null);
     const [activeTab, setActiveTab] = useState('pending');
+    const [viewType, setViewType] = useState('received'); // 'received' | 'sent'
     const [error, setError] = useState(null);
 
     // Notifications
@@ -105,7 +108,7 @@ const Requests = () => {
         setIsLoading(true);
         setError(null);
         try {
-            const result = await SwapRequestsService.getReceivedRequests(); // You'll need to implement this method
+            const result = await SwapRequestsService.getSwapRequests(viewType);
             if (result.success) {
                 setRequests(result.data);
             } else {
@@ -117,7 +120,7 @@ const Requests = () => {
         } finally {
             setIsLoading(false);
         }
-    }, []);
+    }, [viewType]);
 
     useEffect(() => {
         fetchRequests();
@@ -161,6 +164,25 @@ const Requests = () => {
         }
     }, [fetchRequests, showSuccessNotification, showErrorNotification]);
 
+    // Handle cancel (for sent pending requests)
+    const handleCancelRequest = useCallback(async (requestId) => {
+        setActionLoading(requestId);
+        try {
+            const result = await SwapRequestsService.cancelRequest(requestId);
+            if (result.success) {
+                showSuccessNotification('Request cancelled');
+                await fetchRequests();
+            } else {
+                showErrorNotification(result.error || 'Failed to cancel request');
+            }
+        } catch (error) {
+            showErrorNotification('Failed to cancel request');
+            console.error('Error cancelling request:', error);
+        } finally {
+            setActionLoading(null);
+        }
+    }, [fetchRequests, showSuccessNotification, showErrorNotification]);
+
     // Filter requests based on active tab
     const filteredRequests = requests.filter(request => {
         if (activeTab === 'all') return true;
@@ -181,11 +203,26 @@ const Requests = () => {
                     {/* Header */}
                     <div className="mb-8">
                         <h1 className="text-3xl font-bold text-gray-900">Skill Swap Requests</h1>
-                        <p className="text-gray-600 mt-2">Manage incoming requests from other users</p>
+                        <p className="text-gray-600 mt-2">Manage your requests</p>
                     </div>
 
-                    {/* Tabs */}
-                    <div className="mb-6">
+                    {/* View Toggle and Tabs */}
+                    <div className="mb-6 flex flex-col gap-4">
+                        <div className="flex items-center gap-2">
+                            <button
+                                className={`px-4 py-2 rounded-lg text-sm font-medium ${viewType === 'received' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700'}`}
+                                onClick={() => setViewType('received')}
+                            >
+                                Received
+                            </button>
+                            <button
+                                className={`px-4 py-2 rounded-lg text-sm font-medium ${viewType === 'sent' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700'}`}
+                                onClick={() => setViewType('sent')}
+                            >
+                                Sent
+                            </button>
+                        </div>
+                        <div>
                         <nav className="flex space-x-8">
                             {tabs.map((tab) => (
                                 <button
@@ -208,6 +245,7 @@ const Requests = () => {
                                 </button>
                             ))}
                         </nav>
+                        </div>
                     </div>
 
                     {/* Content */}
@@ -247,8 +285,11 @@ const Requests = () => {
                                 <RequestCard
                                     key={request._id}
                                     request={request}
+                                    currentUserId={user?.id || user?._id}
+                                    viewType={viewType}
                                     onAccept={handleAcceptRequest}
                                     onReject={handleRejectRequest}
+                                    onCancel={handleCancelRequest}
                                     isLoading={actionLoading === request._id}
                                 />
                             ))}
