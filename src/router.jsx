@@ -14,6 +14,7 @@ import PublicProfilesPage from "./pages/PublicProfiles";
 import { DashboardProvider } from "./context/DashboardContext";
 import Profile from "./pages/Profile";
 import Requests from "./components/Requests/Requests";
+import ChatPage from "./pages/Chat";
 
 const DashboardRoutes = () => (
   <DashboardProvider>
@@ -27,6 +28,7 @@ const DashboardRoutes = () => (
       <Route path="/notifications" element={<Notifications />} />
       <Route path="/public-profiles" element={<PublicProfilesPage />} />
       <Route path="/requests" element={<Requests />} />
+      <Route path="/chat" element={<ChatPage />} />
     </Routes>
   </DashboardProvider>
 );

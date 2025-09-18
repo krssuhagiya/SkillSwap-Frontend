@@ -13,6 +13,7 @@ import { Loader2 } from 'lucide-react';
 import SwapRequestsService from '../../services/swapRequests.service';
 import DashboardLayout from '../Layout/DashboardLayout';
 import RequestCard from './RequestCard';
+import Chat from '../Chat/Chat';
 import { useAuth } from '../../context/AuthContext';
 
 // Success/Error Notifications (same as in PublicProfiles)
@@ -82,6 +83,8 @@ const Requests = () => {
     const [activeTab, setActiveTab] = useState('pending');
     const [viewType, setViewType] = useState('received'); // 'received' | 'sent'
     const [error, setError] = useState(null);
+    const [showChat, setShowChat] = useState(false);
+    const [selectedChat, setSelectedChat] = useState(null);
 
     // Notifications
     const [errorNotification, setErrorNotification] = useState({ show: false, message: '' });
@@ -110,7 +113,11 @@ const Requests = () => {
         try {
             const result = await SwapRequestsService.getSwapRequests(viewType);
             if (result.success) {
-                setRequests(result.data);
+                // Hide cancelled requests from all views
+                const visibleRequests = Array.isArray(result.data)
+                    ? result.data.filter(r => r.status !== 'cancelled')
+                    : [];
+                setRequests(visibleRequests);
             } else {
                 setError(result.error || 'Failed to fetch requests');
             }
@@ -183,6 +190,18 @@ const Requests = () => {
         }
     }, [fetchRequests, showSuccessNotification, showErrorNotification]);
 
+    // Handle opening chat
+    const handleOpenChat = useCallback((chat) => {
+        setSelectedChat(chat);
+        setShowChat(true);
+    }, []);
+
+    // Handle closing chat
+    const handleCloseChat = useCallback(() => {
+        setShowChat(false);
+        setSelectedChat(null);
+    }, []);
+
     // Filter requests based on active tab
     const filteredRequests = requests.filter(request => {
         if (activeTab === 'all') return true;
@@ -196,6 +215,27 @@ const Requests = () => {
         { key: 'all', label: 'All', count: requests.length },
     ];
 
+    // If chat is open, show chat interface
+    if (showChat) {
+        return (
+            <DashboardLayout>
+                <div className="h-screen flex flex-col">
+                    <div className="bg-white border-b border-gray-200 px-4 py-3">
+                        <button
+                            onClick={handleCloseChat}
+                            className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                        >
+                            ← Back to Requests
+                        </button>
+                    </div>
+                    <div className="flex-1">
+                        <Chat />
+                    </div>
+                </div>
+            </DashboardLayout>
+        );
+    }
+
     return (
         <DashboardLayout>
             <div className="min-h-screen bg-gray-50">
@@ -208,22 +248,22 @@ const Requests = () => {
 
                     {/* View Toggle and Tabs */}
                     <div className="mb-6 flex flex-col gap-4">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 sm:gap-3">
                             <button
-                                className={`px-4 py-2 rounded-lg text-sm font-medium ${viewType === 'received' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700'}`}
+                                className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-sm font-medium ${viewType === 'received' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700'}`}
                                 onClick={() => setViewType('received')}
                             >
                                 Received
                             </button>
                             <button
-                                className={`px-4 py-2 rounded-lg text-sm font-medium ${viewType === 'sent' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700'}`}
+                                className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-sm font-medium ${viewType === 'sent' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700'}`}
                                 onClick={() => setViewType('sent')}
                             >
                                 Sent
                             </button>
                         </div>
                         <div>
-                        <nav className="flex space-x-8">
+                        <nav className="flex flex-wrap gap-3 sm:gap-6">
                             {tabs.map((tab) => (
                                 <button
                                     key={tab.key}
@@ -290,6 +330,7 @@ const Requests = () => {
                                     onAccept={handleAcceptRequest}
                                     onReject={handleRejectRequest}
                                     onCancel={handleCancelRequest}
+                                    onOpenChat={handleOpenChat}
                                     isLoading={actionLoading === request._id}
                                 />
                             ))}

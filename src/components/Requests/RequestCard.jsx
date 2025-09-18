@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
-import { CalendarIcon, CheckIcon, Loader2, MailIcon, UserIcon, XIcon } from "lucide-react";
+import { CalendarIcon, CheckIcon, Loader2, MailIcon, UserIcon, XIcon, MessageCircleIcon } from "lucide-react";
 import UserProfileService from "../../services/userProfile.service";
+import ChatService from "../../services/chat.service";
 
 // Request Card Component
-const RequestCard = ({ request, currentUserId, viewType, onAccept, onReject, onCancel, isLoading }) => {
+const RequestCard = ({ request, currentUserId, viewType, onAccept, onReject, onCancel, isLoading, onOpenChat }) => {
     const [requesterName, setRequesterName] = useState("Loading...");
     const [counterpartyName, setCounterpartyName] = useState("");
+    const [chatLoading, setChatLoading] = useState(false);
 
     const formatDate = (dateString) => {
         return new Date(dateString).toLocaleDateString("en-US", {
@@ -56,6 +58,36 @@ const RequestCard = ({ request, currentUserId, viewType, onAccept, onReject, onC
     }, [request]);
 
     const isPending = request.status === "pending";
+    const isAccepted = request.status === "accepted";
+
+    const handleOpenChat = async () => {
+        if (!onOpenChat) return;
+        
+        setChatLoading(true);
+        try {
+            // Try to get existing chat first
+            const chatsResult = await ChatService.getUserChats();
+            if (chatsResult.success) {
+                const existingChat = chatsResult.data.find(chat => 
+                    chat.swapRequest && chat.swapRequest._id === request._id
+                );
+                
+                if (existingChat) {
+                    onOpenChat(existingChat);
+                } else {
+                    // Create new chat if it doesn't exist
+                    const createResult = await ChatService.createChat(request._id);
+                    if (createResult.success) {
+                        onOpenChat(createResult.data);
+                    }
+                }
+            }
+        } catch (error) {
+            console.error('Error opening chat:', error);
+        } finally {
+            setChatLoading(false);
+        }
+    };
 
     return (
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
@@ -121,13 +153,27 @@ const RequestCard = ({ request, currentUserId, viewType, onAccept, onReject, onC
                             <button
                                 onClick={() => onCancel(request._id)}
                                 disabled={isLoading}
-                                className="flex-1 flex items-center justify-center gap-2 bg-gray-600 text-white py-2 px-4 rounded-lg hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                className="flex-1 flex items-center justify-center gap-2 bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                             >
                                 {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <XIcon className="w-4 h-4" />}
                                 Cancel
                             </button>
                         </>
                     )}
+                </div>
+            )}
+
+            {/* Chat Button for Accepted Requests */}
+            {isAccepted && onOpenChat && (
+                <div className="flex space-x-3">
+                    <button
+                        onClick={handleOpenChat}
+                        disabled={chatLoading}
+                        className="flex-1 flex items-center justify-center gap-2 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    >
+                        {chatLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <MessageCircleIcon className="w-4 h-4" />}
+                        Open Chat
+                    </button>
                 </div>
             )}
         </div>

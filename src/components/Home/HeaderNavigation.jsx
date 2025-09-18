@@ -2,7 +2,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
-  HomeIcon, 
   UsersIcon, 
   ChartBarIcon, 
   LightningBoltIcon, 
@@ -11,7 +10,8 @@ import {
   LogoutIcon,
   MenuIcon,
   XIcon,
-  ClipboardListIcon
+  ClipboardListIcon,
+  ChatAlt2Icon
 } from '@heroicons/react/outline';
 
 const HeaderNavigation = ({ user }) => {
@@ -20,9 +20,9 @@ const HeaderNavigation = ({ user }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const navigationItems = [
-    { name: 'Dashboard', href: '/dashboard', icon: HomeIcon },
     { name: 'Public Profiles', href: '/public-profiles', icon: UsersIcon },
-    { name: 'Requests', href: '/requests', icon: ClipboardListIcon }, // New requests section
+    { name: 'Requests', href: '/requests', icon: ClipboardListIcon },
+    { name: 'Messages', href: '/chat', icon: ChatAlt2Icon },
     { name: 'Analytics', href: '/stats', icon: ChartBarIcon },
     { name: 'Actions', href: '/actions', icon: LightningBoltIcon },
     { name: 'Notifications', href: '/notifications', icon: BellIcon },
@@ -30,22 +30,29 @@ const HeaderNavigation = ({ user }) => {
 
   const handleLogout = () => {
     // Add your logout logic here
-    localStorage.removeItem('token');
-    navigate('/login');
+    try {
+      localStorage.removeItem('token');
+      navigate('/login');
+    } catch (error) {
+      console.error('Error during logout:', error);
+      navigate('/login');
+    }
   };
 
   return (
-    <nav className="bg-white shadow-sm border-b border-gray-200">
+    <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur border-b border-gray-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           {/* Logo and primary navigation */}
           <div className="flex">
             <div className="flex-shrink-0 flex items-center">
-              <h1 className="text-xl font-bold text-gray-900">Skill Swap</h1>
+              <Link to="/" className="text-xl font-semibold tracking-tight text-gray-900 hover:text-gray-700">
+                Skill Swap
+              </Link>
             </div>
             
             {/* Desktop navigation */}
-            <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
+            <div className="hidden sm:ml-8 sm:flex sm:items-center sm:space-x-1">
               {navigationItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = location.pathname === item.href;
@@ -54,13 +61,13 @@ const HeaderNavigation = ({ user }) => {
                   <Link
                     key={item.name}
                     to={item.href}
-                    className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
+                    className={`inline-flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                       isActive
-                        ? 'border-blue-500 text-gray-900'
-                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                        ? 'bg-blue-600 text-white shadow'
+                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
                     }`}
                   >
-                    <Icon className="w-4 h-4 mr-2" />
+                    <Icon className="w-5 h-5 mr-2" />
                     {item.name}
                   </Link>
                 );
@@ -73,15 +80,15 @@ const HeaderNavigation = ({ user }) => {
             <div className="flex items-center space-x-4">
               <Link
                 to="/profile"
-                className="flex items-center text-gray-500 hover:text-gray-700"
+                className="flex items-center px-3 py-2 rounded-md text-gray-600 hover:text-gray-900 hover:bg-gray-100"
               >
-                <UserIcon className="w-5 h-5 mr-1" />
+                <UserIcon className="w-5 h-5 mr-2" />
                 <span className="text-sm font-medium">{user?.fullname || user?.name}</span>
               </Link>
               
               <button
                 onClick={handleLogout}
-                className="flex items-center text-gray-500 hover:text-gray-700"
+                className="flex items-center px-3 py-2 rounded-md text-gray-600 hover:text-gray-900 hover:bg-gray-100"
               >
                 <LogoutIcon className="w-5 h-5 mr-1" />
                 <span className="text-sm font-medium">Logout</span>
@@ -117,10 +124,10 @@ const HeaderNavigation = ({ user }) => {
                 <Link
                   key={item.name}
                   to={item.href}
-                  className={`flex items-center pl-3 pr-4 py-2 border-l-4 text-base font-medium ${
+                  className={`flex items-center px-4 py-3 text-base font-medium ${
                     isActive
-                      ? 'bg-blue-50 border-blue-500 text-blue-700'
-                      : 'border-transparent text-gray-600 hover:text-gray-800 hover:bg-gray-50 hover:border-gray-300'
+                      ? 'bg-blue-50 text-blue-700'
+                      : 'text-gray-700 hover:bg-gray-50'
                   }`}
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
@@ -140,7 +147,7 @@ const HeaderNavigation = ({ user }) => {
             <div className="mt-3 space-y-1">
               <Link
                 to="/update-profile"
-                className="flex items-center px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-800"
+                className="flex items-center px-4 py-2 text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 <UserIcon className="w-5 h-5 mr-3" />
@@ -151,7 +158,7 @@ const HeaderNavigation = ({ user }) => {
                   setIsMobileMenuOpen(false);
                   handleLogout();
                 }}
-                className="flex items-center w-full px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-800"
+                className="flex items-center w-full px-4 py-2 text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50"
               >
                 <LogoutIcon className="w-5 h-5 mr-3" />
                 Logout
