@@ -19,7 +19,10 @@ export const AuthProvider = ({ children }) => {
             if (token) {
                 try {
                     const res = await fetchUserInfo();
-                    setUser({ ...res.data, token });
+                    const userData = { ...res, token };
+                    console.log('Init - User data from fetchUserInfo:', res);
+                    console.log('Init - Final user data:', userData);
+                    setUser(userData);
                 } catch (err) {
                     console.error("Error fetching user info:", err.response?.data?.msg || err.message);
                     localStorage.removeItem("token");
@@ -43,6 +46,8 @@ export const AuthProvider = ({ children }) => {
 
             const userInfo = await fetchUserInfo(); 
             const userData = { ...userInfo, token };
+            console.log('Login - User data from fetchUserInfo:', userInfo);
+            console.log('Login - Final user data:', userData);
             setUser(userData);
             
             return userData;
@@ -75,6 +80,7 @@ export const AuthProvider = ({ children }) => {
 
     const value = {
         user,
+        token: user?.token || localStorage.getItem("token"),
         login,
         logout,
         loading,

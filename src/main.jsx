@@ -4,11 +4,14 @@ import "./index.css";
 import App from "./App.jsx";
 import { BrowserRouter } from "react-router";
 import { AuthProvider } from "./context/AuthContext.jsx";
+import { SocketProvider } from "./context/SocketContext.jsx";
 
 createRoot(document.getElementById("root")).render(
   <BrowserRouter>
-    <AuthProvider>
-      <App />
+    <AuthProvider> 
+      <SocketProvider>
+        <App /> 
+      </SocketProvider>
     </AuthProvider>
   </BrowserRouter>
 );

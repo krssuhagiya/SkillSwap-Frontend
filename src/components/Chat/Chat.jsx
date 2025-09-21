@@ -17,6 +17,14 @@ const Chat = () => {
         setIsMobileView(false);
     };
 
+    const handleChatDeleted = (deletedChatId) => {
+        // If the deleted chat was selected, clear selection
+        if (selectedChat && selectedChat._id === deletedChatId) {
+            setSelectedChat(null);
+            setIsMobileView(false);
+        }
+    };
+
     return (
         <div className="h-full flex flex-col">
             {/* Header */}
@@ -44,6 +52,7 @@ const Chat = () => {
                         <ChatWindow 
                             chat={selectedChat}
                             onBack={handleBackToList}
+                            onChatDeleted={handleChatDeleted}
                         />
                     </div>
                 </div>
@@ -61,6 +70,7 @@ const Chat = () => {
                         <ChatWindow 
                             chat={selectedChat}
                             onBack={handleBackToList}
+                            onChatDeleted={handleChatDeleted}
                         />
                     )}
                 </div>

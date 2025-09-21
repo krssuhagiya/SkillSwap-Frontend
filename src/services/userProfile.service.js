@@ -22,7 +22,7 @@ const UserProfileService = {
 
     getProfileById: async (profileId) => {
         try {
-            const response = await API.get(`/profile/user/${profileId}`);
+            const response = await API.get(`/profile/profile/${profileId}`);
             return response.data;
         } catch (error) {
             throw error.response?.data || error.message;

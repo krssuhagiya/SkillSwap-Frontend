@@ -167,6 +167,28 @@ const ChatService = {
                 status: error.response?.status
             };
         }
+    },
+
+    /**
+     * Delete a chat and all its messages
+     * @param {string} chatId - ID of the chat
+     * @returns {Promise} API response
+     */
+    deleteChat: async (chatId) => {
+        try {
+            const response = await API.delete(`/chats/${chatId}`);
+
+            return {
+                success: true,
+                message: response.data.message
+            };
+        } catch (error) {
+            return {
+                success: false,
+                error: error.response?.data?.error || 'Failed to delete chat',
+                status: error.response?.status
+            };
+        }
     }
 };
 
